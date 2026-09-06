@@ -1,89 +1,949 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0b0b0d">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0b0f">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="SHITLIST™">
-<title>SHITLIST™</title>
+<title>💩 SHITLIST™</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
-*{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0b0b0d;color:#f5f5f5}
-header{padding:28px 20px 18px;background:linear-gradient(135deg,#19191d,#0b0b0d);border-bottom:1px solid #29292e}
-h1{margin:0;font-size:32px;letter-spacing:-1px}.sub{color:#999;margin-top:5px}
-.wrap{max-width:720px;margin:auto;padding:18px 16px 40px}
-.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}.stat{background:#17171b;border:1px solid #29292e;border-radius:16px;padding:15px}.num{font-size:27px;font-weight:800}.label{color:#999;font-size:13px}
-button{-webkit-tap-highlight-color:transparent;border:0;border-radius:13px;padding:13px 15px;font-weight:750;font-size:15px;cursor:pointer}
-.add{width:100%;background:#f2f2f2;color:#111;margin-bottom:18px}.ghost{background:#222228;color:#fff}
-.card{background:#151519;border:1px solid #29292e;border-radius:18px;padding:16px;margin:10px 0}
-.row{display:flex;justify-content:space-between;gap:12px;align-items:center}.name{font-size:19px;font-weight:800}.badge{font-size:12px;padding:6px 9px;border-radius:999px;background:#2a1717;color:#ff9c9c}
-.reason{color:#c5c5c9;margin:10px 0 13px;line-height:1.4}.meta{font-size:12px;color:#777}
-.actions{display:flex;gap:8px}.actions button{flex:1;padding:10px}
-.empty{text-align:center;color:#777;padding:40px 10px}
-#modal{display:none;position:fixed;inset:0;background:#000b;align-items:flex-end;justify-content:center;padding:12px}
-.sheet{width:min(720px,100%);background:#17171b;border:1px solid #303036;border-radius:24px;padding:20px}
-input,textarea,select{width:100%;margin:7px 0 13px;padding:13px;border-radius:12px;border:1px solid #35353b;background:#0f0f12;color:#fff;font-size:16px}
-label{font-size:13px;color:#aaa}.close{background:#29292e;color:#fff}
+*{box-sizing:border-box}
+body{margin:0;background:#09090c;color:#f5f5f7;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{padding:28px 20px 15px;border-bottom:1px solid #292930;background:#09090c;position:sticky;top:0;z-index:5}
+.wrap{max-width:760px;margin:auto;padding:0 16px}
+h1{margin:0;font-size:34px;letter-spacing:-1px}
+header p{margin:5px 0 0;color:#999;font-size:16px}
+nav{display:flex;gap:8px;overflow:auto;padding:14px 0 2px}
+nav button{white-space:nowrap;border:0;border-radius:14px;padding:11px 15px;background:#202026;color:#ddd;font-weight:800}
+nav button.on{background:#f2f2f2;color:#111}
+.page{display:none;padding:18px 0 50px}
+.page.on{display:block}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stat,.card{background:#15151a;border:1px solid #2a2a32;border-radius:22px}
+.stat{padding:19px}
+.num{font-size:40px;font-weight:900}
+.muted{color:#999}
+.small{font-size:13px;color:#888}
+.btn{width:100%;border:0;border-radius:16px;padding:16px;margin-top:12px;font-size:17px;font-weight:900;background:#f2f2f2;color:#111}
+.btn.dark{background:#24242b;color:#fff}
+.btn.danger{background:#351719;color:#ff9d9d}
+.card{padding:18px;margin:12px 0}
+.row{display:flex;justify-content:space-between;gap:12px;align-items:center}
+.name{font-size:21px;font-weight:900}
+.badge{padding:8px 11px;border-radius:999px;background:#321719;color:#ff9d9d;font-weight:800;font-size:12px}
+.reason{font-size:18px;color:#d0d0d5;margin:12px 0;line-height:1.35}
+.meta{font-size:13px;color:#888;line-height:1.5}
+.points{font-size:25px;font-weight:900}
+.actions{display:flex;gap:8px}
+.actions button{flex:1;border:0;border-radius:12px;padding:12px;background:#24242b;color:#fff;font-weight:800}
+.rank{display:grid;grid-template-columns:48px 1fr auto;gap:12px;align-items:center;padding:15px 0;border-bottom:1px solid #292930}
+.rank:last-child{border:0}
+.pos{font-size:25px}
+.score{font-size:22px;font-weight:900}
+input,textarea,select{width:100%;padding:14px;border-radius:13px;border:1px solid #35353e;background:#18181d;color:#fff;font-size:16px;margin:6px 0 12px}
+label{font-size:13px;color:#aaa;font-weight:700}
+.modal{display:none;position:fixed;inset:0;background:#000c;z-index:20;padding:20px;align-items:flex-end}
+.modal.show{display:flex}
+.sheet{width:min(760px,100%);margin:auto;background:#17171c;border:1px solid #333;border-radius:24px;padding:22px;max-height:92vh;overflow:auto}
+.close{float:right;border:0;background:#28282f;color:#fff;border-radius:10px;padding:8px 12px}
+.center{text-align:center;padding:30px 10px}
+.hidden{display:none!important}
+.login{min-height:80vh;display:flex;align-items:center}
+.hero{padding:22px;border-radius:24px;background:linear-gradient(145deg,#17171d,#101014);border:1px solid #303038;margin-bottom:14px}
+.heroTitle{font-size:25px;font-weight:900}
+.heroSub{color:#999;margin-top:5px}
+.search{margin:8px 0 14px}
+.streak{font-size:13px;color:#aaa;margin-top:8px}
+.trophy{font-size:38px}
+.title{font-weight:900;font-size:14px;margin-top:4px}
+hr{border:0;border-top:1px solid #292930;margin:18px 0}
 </style>
 </head>
+
 <body>
-<header><div class="wrap"><h1>💩 SHITLIST™</h1><div class="sub">Porque todo feo tiene consecuencias.</div></div></header>
-<main class="wrap">
-<div class="stats">
- <div class="stat"><div class="num" id="active">0</div><div class="label">🚨 En la lista</div></div>
- <div class="stat"><div class="num" id="indulted">0</div><div class="label">⚖️ Indultados</div></div>
+
+<header>
+<div class="wrap">
+<h1>💩 SHITLIST™</h1>
+<p>Porque todo feo tiene consecuencias.</p>
+
+<nav>
+<button class="on" data-page="home">🏠 Inicio</button>
+<button data-page="ranking">🏆 Ranking</button>
+<button data-page="people">👥 Grupo</button>
+<button data-page="me">👤 Mi perfil</button>
+</nav>
 </div>
-<button class="add" onclick="openModal()">＋ METER EN SHITLIST</button>
-<div id="list"></div>
+</header>
+
+<main class="wrap">
+
+<section id="login" class="login">
+<div style="width:100%">
+<div class="hero">
+<div class="trophy">💩</div>
+<div class="heroTitle">Bienvenido a SHITLIST™</div>
+<div class="heroSub">El lugar donde las malas decisiones quedan registradas.</div>
+</div>
+
+<div class="card">
+<h2 id="authTitle">Entrar</h2>
+<p class="muted">Cada uno tiene su cuenta. El que pone una mierda es el único que puede gestionarla.</p>
+
+<label>Email</label>
+<input id="email" type="email" autocomplete="email">
+
+<label>Contraseña</label>
+<input id="password" type="password" autocomplete="current-password">
+
+<div id="nameWrap" class="hidden">
+<label>Nombre que verá el grupo</label>
+<input id="displayName" maxlength="30" placeholder="Ej: Pablo">
+</div>
+
+<button class="btn" id="authBtn">Entrar</button>
+<button class="btn dark" id="switchAuth">Crear cuenta</button>
+<p id="authMsg" class="small"></p>
+</div>
+</div>
+</section>
+
+
+<div id="app" class="hidden">
+
+<section class="page on" id="page-home">
+
+<div class="hero">
+<div class="heroTitle">🚨 Central de desgracias</div>
+<div class="heroSub">Aquí se registra absolutamente todo.</div>
+</div>
+
+<div class="stats">
+<div class="stat">
+<div class="num" id="activeCount">0</div>
+<div class="muted">🚨 Mierdas activas</div>
+</div>
+
+<div class="stat">
+<div class="num" id="pardonedCount">0</div>
+<div class="muted">⚖️ Indultadas</div>
+</div>
+</div>
+
+<button class="btn" id="addBtn">💩 METER EN SHITLIST</button>
+
+<div class="card">
+<h3>🔥 Últimas desgracias</h3>
+<input class="search" id="searchHome" placeholder="🔎 Buscar persona o motivo...">
+<div id="recent"></div>
+</div>
+
+</section>
+
+
+<section class="page" id="page-ranking">
+
+<div class="hero">
+<div class="heroTitle">🏆 HALL OF SHAME</div>
+<div class="heroSub">Cuantos más puntos, peor persona eres.</div>
+</div>
+
+<div class="card">
+<div id="ranking"></div>
+</div>
+
+</section>
+
+
+<section class="page" id="page-people">
+
+<div class="hero">
+<div class="heroTitle">👥 Los sospechosos</div>
+<div class="heroSub">Todos los miembros del grupo.</div>
+</div>
+
+<div class="card">
+<input class="search" id="searchPeople" placeholder="🔎 Buscar miembro...">
+<div id="people"></div>
+</div>
+
+</section>
+
+
+<section class="page" id="page-me">
+<div id="profile"></div>
+</section>
+
+</div>
 </main>
 
-<div id="modal">
- <div class="sheet">
-  <h2 id="modalTitle">💩 Nuevo expediente</h2>
-  <label>Nombre</label><input id="name" placeholder="Ej. Juan">
-  <label>Motivo del delito</label><textarea id="reason" rows="3" placeholder="¿Qué feo ha cometido?"></textarea>
-  <label>Nivel de mierda</label>
-  <select id="level"><option value="1">💩 1 — Leve</option><option value="2">💩💩 2 — Sospechoso</option><option value="3">💩💩💩 3 — Feo serio</option><option value="4">☠️ 4 — Reincidente</option><option value="5">☠️☠️ 5 — Enemigo público</option></select>
-  <div class="actions"><button class="close" onclick="closeModal()">Cancelar</button><button onclick="save()">🚨 Confirmar delito</button></div>
- </div>
+
+<div class="modal" id="modal">
+
+<div class="sheet">
+
+<button class="close" id="closeModal">✕</button>
+
+<h2>💩 Nuevo expediente</h2>
+
+<label>A quién</label>
+<select id="target"></select>
+
+<label>Motivo del delito</label>
+<textarea id="reason" rows="4" maxlength="300" placeholder="Explica qué ha hecho este desgraciado..."></textarea>
+
+<label>Nivel de mierda</label>
+<select id="level">
+<option value="1">💩 1 punto — Tontería</option>
+<option value="2">💩💩 2 puntos — Sospechoso</option>
+<option value="3">💩💩💩 3 puntos — Bastante feo</option>
+<option value="4">💩💩💩💩 4 puntos — Delito grave</option>
+<option value="5">💩💩💩💩💩 5 puntos — PARA PRISIÓN</option>
+</select>
+
+<button class="btn" id="saveBtn">🚨 REGISTRAR LA MIERDA</button>
+
+<p class="small">
+El expediente pertenece a quien lo crea. Solo esa persona puede indultarlo, reactivarlo o borrarlo.
+</p>
+
+</div>
 </div>
 
+
 <script>
-let data=JSON.parse(localStorage.getItem('shitlist')||'[]');
-let editing=null;
-const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function persist(){localStorage.setItem('shitlist',JSON.stringify(data));render()}
-function render(){
- const active=data.filter(x=>x.active), ind=data.filter(x=>!x.active);
- document.getElementById('active').textContent=active.length;
- document.getElementById('indulted').textContent=ind.length;
- let html='';
- if(!data.length) html='<div class="empty">Aquí todavía no hay desgraciados.<br><br>El expediente está limpio… de momento. 😂</div>';
- data.forEach(x=>{
-   const icons=x.level>=4?'☠️'.repeat(x.level-3):'💩'.repeat(x.level);
-   html+=`<div class="card" style="${x.active?'':'opacity:.62'}">
-    <div class="row"><div class="name">${esc(x.name)}</div><div class="badge">${x.active?'🚨 ACTIVO':'🕊️ INDULTADO'}</div></div>
-    <div class="reason">“${esc(x.reason||'Sin declarar')}”</div>
-    <div class="row"><div class="meta">${icons} · ${new Date(x.date).toLocaleDateString('es-ES')}</div></div>
-    <div class="actions" style="margin-top:12px">
-      <button class="ghost" onclick="toggle(${x.id})">${x.active?'⚖️ Indultar':'↩️ Reincorporar'}</button>
-      <button class="ghost" onclick="removeItem(${x.id})">🗑️ Borrar</button>
-    </div>
-   </div>`;
- });
- document.getElementById('list').innerHTML=html;
+
+const SUPABASE_URL="https://puaqybkakjxmkpthgxwu.supabase.co";
+
+const SUPABASE_ANON_KEY="sb_publishable_8TcjYeyf4zlQgtYQ6A7B8A_DgY5pSm7";
+
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+
+let user=null;
+let me=null;
+let profiles=[];
+let shits=[];
+let signup=false;
+
+
+const $=id=>document.getElementById(id);
+
+
+function esc(s){
+return String(s??"").replace(/[&<>"']/g,c=>({
+"&":"&amp;",
+"<":"&lt;",
+">":"&gt;",
+'"':"&quot;",
+"'":"&#39;"
+}[c]));
 }
-function openModal(){editing=null;document.getElementById('modalTitle').textContent='💩 Nuevo expediente';document.getElementById('name').value='';document.getElementById('reason').value='';document.getElementById('level').value='1';document.getElementById('modal').style.display='flex'}
-function closeModal(){document.getElementById('modal').style.display='none'}
-function save(){
- const name=document.getElementById('name').value.trim(); if(!name)return alert('Hace falta el nombre del delincuente 😂');
- data.unshift({id:Date.now(),name,reason:document.getElementById('reason').value.trim(),level:+document.getElementById('level').value,date:new Date().toISOString(),active:true});
- persist();closeModal();
+
+
+function points(x){
+return Number(x.points||x.level||1);
 }
-function toggle(id){const x=data.find(x=>x.id===id);x.active=!x.active;persist(); if(!x.active) alert('⚖️ INDULTO CONCEDIDO\\n\\nEl sujeto ha sido retirado de la Shitlist.\\nEsperemos que no vuelva a delinquir. 😂')}
-function removeItem(id){if(confirm('¿Borrar este expediente para siempre?')){data=data.filter(x=>x.id!==id);persist()}}
+
+
+function fmt(d){
+return new Date(d).toLocaleDateString("es-ES",{
+day:"2-digit",
+month:"2-digit",
+year:"numeric"
+});
+}
+
+
+function titleFor(score){
+
+if(score>=20) return "👑 REY DE LA MIERDA";
+if(score>=15) return "💀 ENEMIGO PÚBLICO";
+if(score>=10) return "🚨 DELINCUENTE HABITUAL";
+if(score>=7) return "🔥 SOSPECHOSO HABITUAL";
+if(score>=4) return "💩 CAMINO PELIGROSO";
+if(score>=1) return "👀 BAJO VIGILANCIA";
+
+return "😇 INOCENTE";
+}
+
+
+async function boot(){
+
+const {data:{session}}=await sb.auth.getSession();
+
+user=session?.user||null;
+
+if(!user){
+
+$("login").classList.remove("hidden");
+$("app").classList.add("hidden");
+return;
+
+}
+
+const {data:p,error}=await sb
+.from("profiles")
+.select("*")
+.eq("id",user.id)
+.single();
+
+if(error){
+
+$("authMsg").textContent=error.message;
+return;
+
+}
+
+me=p;
+
+$("login").classList.add("hidden");
+$("app").classList.remove("hidden");
+
+await load();
+
+}
+
+
+async function load(){
+
+const [ps,ss]=await Promise.all([
+
+sb.from("profiles")
+.select("*")
+.order("display_name"),
+
+sb.from("shitlist")
+.select("*, target:profiles!shitlist_target_id_fkey(display_name), creator:profiles!shitlist_creator_id_fkey(display_name)")
+.order("created_at",{ascending:false})
+
+]);
+
+
+if(ps.error||ss.error){
+
+alert((ps.error||ss.error).message);
+return;
+
+}
+
+profiles=ps.data||[];
+shits=ss.data||[];
+
 render();
+
+}
+
+
+function totalsData(){
+
+const active=shits.filter(x=>!x.pardoned);
+
+const totals={};
+
+profiles.forEach(p=>totals[p.id]=0);
+
+active.forEach(x=>{
+totals[x.target_id]=(totals[x.target_id]||0)+points(x);
+});
+
+return totals;
+
+}
+
+
+function render(){
+
+const active=shits.filter(x=>!x.pardoned);
+
+$("activeCount").textContent=active.length;
+
+$("pardonedCount").textContent=
+shits.filter(x=>x.pardoned).length;
+
+renderRecent();
+
+renderRanking();
+
+renderPeople();
+
+renderProfile();
+
+$("target").innerHTML=
+profiles
+.filter(p=>p.id!==user.id)
+.map(p=>`<option value="${p.id}">${esc(p.display_name)}</option>`)
+.join("");
+
+}
+
+
+function renderRecent(){
+
+const q=($("searchHome")?.value||"").toLowerCase();
+
+const arr=shits
+.filter(x=>!x.pardoned)
+.filter(x=>
+!q||
+(x.target?.display_name||"").toLowerCase().includes(q)||
+(x.reason||"").toLowerCase().includes(q)
+);
+
+$("recent").innerHTML=
+arr.slice(0,30).map(card).join("")||
+'<div class="center muted">Todavía no hay desgraciados.</div>';
+
+}
+
+
+function renderRanking(){
+
+const active=shits.filter(x=>!x.pardoned);
+
+const totals=totalsData();
+
+const sorted=[...profiles].sort((a,b)=>
+(totals[b.id]||0)-(totals[a.id]||0)
+);
+
+$("ranking").innerHTML=sorted.map((p,i)=>{
+
+const score=totals[p.id]||0;
+
+return `
+<div class="rank">
+
+<div class="pos">
+${["🥇","🥈","🥉"][i]||i+1}
+</div>
+
+<div>
+<b>${esc(p.display_name)}</b>
+
+<div class="title">
+${titleFor(score)}
+</div>
+
+<div class="small">
+${active.filter(x=>x.target_id===p.id).length} expedientes activos
+</div>
+
+</div>
+
+<div class="score">
+${score} 💩
+</div>
+
+</div>
+`;
+
+}).join("")||
+'<div class="center muted">Todavía no hay nadie en el ranking.</div>';
+
+}
+
+
+function renderPeople(){
+
+const q=($("searchPeople")?.value||"").toLowerCase();
+
+const totals=totalsData();
+
+const arr=profiles.filter(p=>
+!q||p.display_name.toLowerCase().includes(q)
+);
+
+$("people").innerHTML=arr.map(p=>{
+
+const score=totals[p.id]||0;
+
+return `
+<div class="rank">
+
+<div class="pos">👤</div>
+
+<div>
+<b>${esc(p.display_name)}</b>
+<div class="small">${titleFor(score)}</div>
+</div>
+
+<div class="score">${score}</div>
+
+</div>
+`;
+
+}).join("");
+
+}
+
+
+function renderProfile(){
+
+const totals=totalsData();
+
+const myScore=totals[me.id]||0;
+
+const received=shits.filter(x=>
+x.target_id===me.id&&!x.pardoned
+);
+
+const created=shits.filter(x=>
+x.creator_id===me.id
+);
+
+$("profile").innerHTML=`
+
+<div class="hero">
+
+<div class="heroTitle">
+👤 ${esc(me.display_name)}
+</div>
+
+<div class="heroSub">
+${titleFor(myScore)}
+</div>
+
+</div>
+
+
+<div class="stats">
+
+<div class="stat">
+<div class="num">${myScore}</div>
+<div class="muted">💩 puntos</div>
+</div>
+
+<div class="stat">
+<div class="num">${received.length}</div>
+<div class="muted">🚨 recibidas</div>
+</div>
+
+</div>
+
+
+<div class="card">
+
+<h3>📊 Tus estadísticas</h3>
+
+<p class="muted">
+Has creado <b>${created.length}</b> expedientes.
+</p>
+
+<p class="muted">
+Tienes <b>${received.length}</b> mierdas activas.
+</p>
+
+<p class="streak">
+${myScore===0
+?"😇 Estás limpio. De momento..."
+:myScore>=15
+?"💀 Hermano, deberías preocuparte."
+:myScore>=10
+?"🚨 Tu situación empieza a ser preocupante."
+:"👀 Te tenemos vigilado."}
+</p>
+
+</div>
+
+
+<div class="card">
+
+<h3>🚨 Tus expedientes recibidos</h3>
+
+${received.map(card).join("")||
+'<p class="muted">Milagro. Estás completamente limpio.</p>'}
+
+</div>
+
+
+<button class="btn dark" onclick="logout()">
+Cerrar sesión
+</button>
+
+`;
+
+}
+
+
+function card(x){
+
+const mine=x.creator_id===user.id;
+
+return `
+
+<div class="card">
+
+<div class="row">
+
+<div class="name">
+${esc(x.target?.display_name||"Desconocido")}
+</div>
+
+<span class="badge">
+${x.pardoned?"⚖️ INDULTADO":"🚨 ACTIVO"}
+</span>
+
+</div>
+
+
+<div class="reason">
+“${esc(x.reason)}”
+</div>
+
+
+<div class="meta">
+
+${"💩".repeat(points(x))}
+<br>
+
+${points(x)} punto${points(x)!==1?"s":""}
+· ${fmt(x.created_at)}
+· puesto por ${esc(x.creator?.display_name||"?")}
+
+</div>
+
+
+${mine?`
+
+<div class="actions" style="margin-top:14px">
+
+<button onclick="pardon('${x.id}')">
+⚖️ ${x.pardoned?"Reactivar":"Indultar"}
+</button>
+
+<button onclick="removeShit('${x.id}')">
+🗑️ Borrar
+</button>
+
+</div>
+
+`:""}
+
+</div>
+
+`;
+
+}
+
+
+async function pardon(id){
+
+const item=shits.find(x=>x.id===id);
+
+if(!item)return;
+
+if(item.creator_id!==user.id){
+
+alert("No puedes gestionar una mierda que no has creado tú.");
+
+return;
+
+}
+
+if(!confirm(
+item.pardoned
+?"¿Reactivar este expediente?"
+:"¿Indultar este expediente?"
+))return;
+
+
+const {error}=await sb
+.from("shitlist")
+.update({pardoned:!item.pardoned})
+.eq("id",id);
+
+
+if(error){
+
+alert(error.message);
+
+}else{
+
+await load();
+
+}
+
+}
+
+
+async function removeShit(id){
+
+const item=shits.find(x=>x.id===id);
+
+if(!item)return;
+
+if(item.creator_id!==user.id){
+
+alert("No puedes borrar una mierda que no has creado tú.");
+
+return;
+
+}
+
+if(!confirm(
+"¿Borrar DEFINITIVAMENTE este expediente?"
+))return;
+
+
+const {error}=await sb
+.from("shitlist")
+.delete()
+.eq("id",id);
+
+
+if(error){
+
+alert(error.message);
+
+}else{
+
+await load();
+
+}
+
+}
+
+
+$("authBtn").onclick=async()=>{
+
+const email=$("email").value.trim();
+
+const password=$("password").value;
+
+const display=$("displayName").value.trim();
+
+$("authMsg").textContent="";
+
+
+if(!email||!password){
+
+$("authMsg").textContent="Pon email y contraseña.";
+
+return;
+
+}
+
+
+if(signup){
+
+if(!display){
+
+$("authMsg").textContent="Pon tu nombre.";
+
+return;
+
+}
+
+
+const {data,error}=await sb.auth.signUp({
+
+email,
+password,
+
+options:{
+data:{
+display_name:display
+}
+}
+
+});
+
+
+if(error){
+
+$("authMsg").textContent=error.message;
+
+return;
+
+}
+
+
+$("authMsg").textContent=
+"Cuenta creada. Si te pide confirmar el email, confírmalo y vuelve a entrar.";
+
+
+}else{
+
+
+const {error}=await sb.auth.signInWithPassword({
+email,
+password
+});
+
+
+if(error){
+
+$("authMsg").textContent=error.message;
+
+return;
+
+}
+
+
+await boot();
+
+}
+
+};
+
+
+$("switchAuth").onclick=()=>{
+
+signup=!signup;
+
+$("authTitle").textContent=
+signup?"Crear cuenta":"Entrar";
+
+$("authBtn").textContent=
+signup?"Crear cuenta":"Entrar";
+
+$("switchAuth").textContent=
+signup?"Ya tengo cuenta":"Crear cuenta";
+
+$("nameWrap").classList.toggle(
+"hidden",
+!signup
+);
+
+};
+
+
+$("addBtn").onclick=()=>{
+
+$("modal").classList.add("show");
+
+};
+
+
+$("closeModal").onclick=()=>{
+
+$("modal").classList.remove("show");
+
+};
+
+
+$("saveBtn").onclick=async()=>{
+
+const target_id=$("target").value;
+
+const reason=$("reason").value.trim();
+
+const level=Number($("level").value);
+
+
+if(!target_id||!reason){
+
+alert("Falta el nombre o el motivo.");
+
+return;
+
+}
+
+
+if(target_id===user.id){
+
+alert("No puedes meterte a ti mismo en la SHITLIST 😂");
+
+return;
+
+}
+
+
+const {error}=await sb
+.from("shitlist")
+.insert({
+
+creator_id:user.id,
+target_id,
+reason,
+level,
+points:level
+
+});
+
+
+if(error){
+
+alert(error.message);
+
+}else{
+
+$("reason").value="";
+
+$("level").value="1";
+
+$("modal").classList.remove("show");
+
+await load();
+
+}
+
+};
+
+
+$("searchHome").addEventListener(
+"input",
+renderRecent
+);
+
+
+$("searchPeople").addEventListener(
+"input",
+renderPeople
+);
+
+
+document
+.querySelectorAll("nav button")
+.forEach(b=>{
+
+b.onclick=()=>{
+
+document
+.querySelectorAll("nav button")
+.forEach(x=>x.classList.remove("on"));
+
+b.classList.add("on");
+
+document
+.querySelectorAll(".page")
+.forEach(x=>x.classList.remove("on"));
+
+$("page-"+b.dataset.page)
+.classList.add("on");
+
+};
+
+});
+
+
+async function logout(){
+
+await sb.auth.signOut();
+
+location.reload();
+
+}
+
+
+sb.auth.onAuthStateChange((event,session)=>{
+
+if(event==="SIGNED_OUT"){
+
+location.reload();
+
+}
+
+});
+
+
+boot();
+
 </script>
+
 </body>
 </html>
