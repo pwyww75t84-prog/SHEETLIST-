@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0b0d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SHITLIST™">
+<title>SHITLIST™</title>
+<style>
+*{box-sizing:border-box} body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#0b0b0d;color:#f5f5f5}
+header{padding:28px 20px 18px;background:linear-gradient(135deg,#19191d,#0b0b0d);border-bottom:1px solid #29292e}
+h1{margin:0;font-size:32px;letter-spacing:-1px}.sub{color:#999;margin-top:5px}
+.wrap{max-width:720px;margin:auto;padding:18px 16px 40px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}.stat{background:#17171b;border:1px solid #29292e;border-radius:16px;padding:15px}.num{font-size:27px;font-weight:800}.label{color:#999;font-size:13px}
+button{-webkit-tap-highlight-color:transparent;border:0;border-radius:13px;padding:13px 15px;font-weight:750;font-size:15px;cursor:pointer}
+.add{width:100%;background:#f2f2f2;color:#111;margin-bottom:18px}.ghost{background:#222228;color:#fff}
+.card{background:#151519;border:1px solid #29292e;border-radius:18px;padding:16px;margin:10px 0}
+.row{display:flex;justify-content:space-between;gap:12px;align-items:center}.name{font-size:19px;font-weight:800}.badge{font-size:12px;padding:6px 9px;border-radius:999px;background:#2a1717;color:#ff9c9c}
+.reason{color:#c5c5c9;margin:10px 0 13px;line-height:1.4}.meta{font-size:12px;color:#777}
+.actions{display:flex;gap:8px}.actions button{flex:1;padding:10px}
+.empty{text-align:center;color:#777;padding:40px 10px}
+#modal{display:none;position:fixed;inset:0;background:#000b;align-items:flex-end;justify-content:center;padding:12px}
+.sheet{width:min(720px,100%);background:#17171b;border:1px solid #303036;border-radius:24px;padding:20px}
+input,textarea,select{width:100%;margin:7px 0 13px;padding:13px;border-radius:12px;border:1px solid #35353b;background:#0f0f12;color:#fff;font-size:16px}
+label{font-size:13px;color:#aaa}.close{background:#29292e;color:#fff}
+</style>
+</head>
+<body>
+<header><div class="wrap"><h1>💩 SHITLIST™</h1><div class="sub">Porque todo feo tiene consecuencias.</div></div></header>
+<main class="wrap">
+<div class="stats">
+ <div class="stat"><div class="num" id="active">0</div><div class="label">🚨 En la lista</div></div>
+ <div class="stat"><div class="num" id="indulted">0</div><div class="label">⚖️ Indultados</div></div>
+</div>
+<button class="add" onclick="openModal()">＋ METER EN SHITLIST</button>
+<div id="list"></div>
+</main>
+
+<div id="modal">
+ <div class="sheet">
+  <h2 id="modalTitle">💩 Nuevo expediente</h2>
+  <label>Nombre</label><input id="name" placeholder="Ej. Juan">
+  <label>Motivo del delito</label><textarea id="reason" rows="3" placeholder="¿Qué feo ha cometido?"></textarea>
+  <label>Nivel de mierda</label>
+  <select id="level"><option value="1">💩 1 — Leve</option><option value="2">💩💩 2 — Sospechoso</option><option value="3">💩💩💩 3 — Feo serio</option><option value="4">☠️ 4 — Reincidente</option><option value="5">☠️☠️ 5 — Enemigo público</option></select>
+  <div class="actions"><button class="close" onclick="closeModal()">Cancelar</button><button onclick="save()">🚨 Confirmar delito</button></div>
+ </div>
+</div>
+
+<script>
+let data=JSON.parse(localStorage.getItem('shitlist')||'[]');
+let editing=null;
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function persist(){localStorage.setItem('shitlist',JSON.stringify(data));render()}
+function render(){
+ const active=data.filter(x=>x.active), ind=data.filter(x=>!x.active);
+ document.getElementById('active').textContent=active.length;
+ document.getElementById('indulted').textContent=ind.length;
+ let html='';
+ if(!data.length) html='<div class="empty">Aquí todavía no hay desgraciados.<br><br>El expediente está limpio… de momento. 😂</div>';
+ data.forEach(x=>{
+   const icons=x.level>=4?'☠️'.repeat(x.level-3):'💩'.repeat(x.level);
+   html+=`<div class="card" style="${x.active?'':'opacity:.62'}">
+    <div class="row"><div class="name">${esc(x.name)}</div><div class="badge">${x.active?'🚨 ACTIVO':'🕊️ INDULTADO'}</div></div>
+    <div class="reason">“${esc(x.reason||'Sin declarar')}”</div>
+    <div class="row"><div class="meta">${icons} · ${new Date(x.date).toLocaleDateString('es-ES')}</div></div>
+    <div class="actions" style="margin-top:12px">
+      <button class="ghost" onclick="toggle(${x.id})">${x.active?'⚖️ Indultar':'↩️ Reincorporar'}</button>
+      <button class="ghost" onclick="removeItem(${x.id})">🗑️ Borrar</button>
+    </div>
+   </div>`;
+ });
+ document.getElementById('list').innerHTML=html;
+}
+function openModal(){editing=null;document.getElementById('modalTitle').textContent='💩 Nuevo expediente';document.getElementById('name').value='';document.getElementById('reason').value='';document.getElementById('level').value='1';document.getElementById('modal').style.display='flex'}
+function closeModal(){document.getElementById('modal').style.display='none'}
+function save(){
+ const name=document.getElementById('name').value.trim(); if(!name)return alert('Hace falta el nombre del delincuente 😂');
+ data.unshift({id:Date.now(),name,reason:document.getElementById('reason').value.trim(),level:+document.getElementById('level').value,date:new Date().toISOString(),active:true});
+ persist();closeModal();
+}
+function toggle(id){const x=data.find(x=>x.id===id);x.active=!x.active;persist(); if(!x.active) alert('⚖️ INDULTO CONCEDIDO\\n\\nEl sujeto ha sido retirado de la Shitlist.\\nEsperemos que no vuelva a delinquir. 😂')}
+function removeItem(id){if(confirm('¿Borrar este expediente para siempre?')){data=data.filter(x=>x.id!==id);persist()}}
+render();
+</script>
+</body>
+</html>
