@@ -191,7 +191,13 @@ hr{border:0;border-top:1px solid #292930;margin:18px 0}
 <h2>💩 Nuevo expediente</h2>
 
 <label>A quién</label>
-<select id="target"></select>
+<select id="targetMember">
+<option value="">— Selecciona alguien del grupo —</option>
+</select>
+
+<label>O escribe otra persona / grupo</label>
+<input id="targetName" maxlength="80" placeholder="Ej: La ex de junior, Chez, todos los jugadores del Madrid...">
+
 
 <label>Motivo del delito</label>
 <textarea id="reason" rows="4" maxlength="300" placeholder="Explica qué ha hecho este desgraciado..."></textarea>
