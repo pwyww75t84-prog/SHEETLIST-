@@ -941,6 +941,325 @@ location.reload();
 });
 
 
+/* ===== NUEVO SISTEMA DE OBJETIVOS ===== */
+
+function fillTargetMembers(){
+
+const select=$("targetMember");
+
+if(!select)return;
+
+select.innerHTML=
+`<option value="">— Selecciona alguien del grupo —</option>`+
+profiles
+.filter(p=>p.id!==user.id)
+.map(p=>`<option value="${p.id}">${esc(p.display_name)}</option>`)
+.join("");
+
+}
+
+
+/* SI ELIGES A ALGUIEN, BORRA EL TEXTO MANUAL */
+
+$("targetMember").onchange=()=>{
+
+if($("targetMember").value){
+$("targetName").value="";
+}
+
+};
+
+$("targetName").oninput=()=>{
+
+if($("targetName").value.trim()){
+$("targetMember").value="";
+}
+
+};
+
+
+/* EXPEDIENTES RECIENTES */
+
+renderRecent=function(){
+
+const q=($("searchHome")?.value||"").toLowerCase();
+
+const arr=shits
+.filter(x=>!x.pardoned)
+.filter(x=>
+!q||
+(x.target_name||x.target?.display_name||"")
+.toLowerCase()
+.includes(q)||
+(x.reason||"")
+.toLowerCase()
+.includes(q)
+);
+
+$("recent").innerHTML=
+arr.slice(0,30).map(card).join("")||
+'<div class="center muted">Todavía no hay desgraciados.</div>';
+
+};
+
+
+/* RANKING */
+
+renderRanking=function(){
+
+const active=shits.filter(x=>!x.pardoned);
+
+const totals={};
+
+active.forEach(x=>{
+
+const name=
+(x.target_name||x.target?.display_name||"Desconocido").trim();
+
+const key=name.toLowerCase();
+
+if(!totals[key]){
+totals[key]={
+name:name,
+score:0,
+count:0
+};
+}
+
+totals[key].score+=points(x);
+totals[key].count++;
+
+});
+
+const sorted=Object.values(totals)
+.sort((a,b)=>b.score-a.score);
+
+$("ranking").innerHTML=
+sorted.map((p,i)=>`
+
+<div class="rank">
+
+<div class="pos">
+${["🥇","🥈","🥉"][i]||i+1}
+</div>
+
+<div>
+
+<b>${esc(p.name)}</b>
+
+<div class="title">
+${titleFor(p.score)}
+</div>
+
+<div class="small">
+${p.count} expedientes activos
+</div>
+
+</div>
+
+<div class="score">
+${p.score} 💩
+</div>
+
+</div>
+
+`).join("")||
+'<div class="center muted">Todavía no hay nadie en el ranking.</div>';
+
+};
+
+
+/* MOSTRAR NOMBRE LIBRE O MIEMBRO */
+
+card=function(x){
+
+const mine=x.creator_id===user.id;
+
+const targetName=
+x.target_name||
+x.target?.display_name||
+"Desconocido";
+
+return `
+
+<div class="card">
+
+<div class="row">
+
+<div class="name">
+${esc(targetName)}
+</div>
+
+<span class="badge">
+${x.pardoned?"⚖️ INDULTADO":"🚨 ACTIVO"}
+</span>
+
+</div>
+
+<div class="reason">
+“${esc(x.reason)}”
+</div>
+
+<div class="meta">
+
+${"💩".repeat(points(x))}
+
+<br>
+
+${points(x)} punto${points(x)!==1?"s":""}
+· ${fmt(x.created_at)}
+· puesto por ${esc(x.creator?.display_name||"?")}
+
+</div>
+
+${mine?`
+
+<div class="actions" style="margin-top:14px">
+
+<button onclick="pardon('${x.id}')">
+⚖️ ${x.pardoned?"Reactivar":"Indultar"}
+</button>
+
+<button onclick="removeShit('${x.id}')">
+🗑️ Borrar
+</button>
+
+</div>
+
+`:""}
+
+</div>
+
+`;
+
+};
+
+
+/* RENDER PRINCIPAL */
+
+render=function(){
+
+const active=shits.filter(x=>!x.pardoned);
+
+$("activeCount").textContent=active.length;
+
+$("pardonedCount").textContent=
+shits.filter(x=>x.pardoned).length;
+
+renderRecent();
+
+renderRanking();
+
+renderPeople();
+
+renderProfile();
+
+fillTargetMembers();
+
+};
+
+
+/* GUARDAR EXPEDIENTE */
+
+$("saveBtn").onclick=async()=>{
+
+const memberId=$("targetMember").value;
+
+const customName=$("targetName").value.trim();
+
+const reason=$("reason").value.trim();
+
+const level=Number($("level").value);
+
+if(!memberId&&!customName){
+
+alert("Selecciona alguien del grupo o escribe un nombre.");
+
+return;
+
+}
+
+if(memberId&&customName){
+
+alert("Selecciona una opción, no las dos.");
+
+return;
+
+}
+
+if(!reason){
+
+alert("Falta el motivo.");
+
+return;
+
+}
+
+let target_id=null;
+
+let target_name=customName;
+
+if(memberId){
+
+if(memberId===user.id){
+
+alert("No puedes meterte a ti mismo en la SHITLIST 😂");
+
+return;
+
+}
+
+target_id=memberId;
+
+const profile=profiles.find(p=>p.id===memberId);
+
+target_name=profile?.display_name||"Desconocido";
+
+}
+
+const {error}=await sb
+.from("shitlist")
+.insert({
+
+creator_id:user.id,
+
+target_id:target_id,
+
+target_name:target_name,
+
+reason:reason,
+
+level:level,
+
+points:level
+
+});
+
+if(error){
+
+alert(error.message);
+
+return;
+
+}
+
+$("targetMember").value="";
+
+$("targetName").value="";
+
+$("reason").value="";
+
+$("level").value="1";
+
+$("modal").classList.remove("show");
+
+await load();
+
+};
+
+
+/* ARRANCAR */
+
 boot();
 
 </script>
